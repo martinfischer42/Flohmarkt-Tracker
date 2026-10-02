@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flohmarkt Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f2;
+      --panel: #ffffff;
+      --text: #171717;
+      --muted: #6b6b64;
+      --border: #d9d8d1;
+      --accent: #174c3c;
+      --accent-soft: #e7f0ec;
+      --danger: #a33b2f;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+
+    main {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    header {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat,
+    .form-panel,
+    .item {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      padding: 12px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.28rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .form-panel {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 650;
+    }
+
+    input,
+    button {
+      font: inherit;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      min-height: 46px;
+      font-size: 16px;
+    }
+
+    input[type="file"] {
+      padding: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button,
+    .download-button {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 12px 14px;
+      min-height: 46px;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      flex: 1 1 180px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .notice {
+      display: none;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 10px 12px;
+      font-weight: 650;
+    }
+
+    .notice.show {
+      display: block;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 10px 0 12px;
+    }
+
+    .toolbar h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .export-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      padding: 10px;
+      align-items: center;
+    }
+
+    .item img {
+      width: 96px;
+      height: 96px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #ededed;
+    }
+
+    .item-info {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .item-name {
+      overflow-wrap: anywhere;
+      font-weight: 750;
+    }
+
+    .price {
+      color: var(--accent);
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .delete {
+      justify-self: start;
+      min-height: auto;
+      padding: 7px 10px;
+      color: var(--danger);
+      border-color: rgba(163, 59, 47, 0.35);
+      font-weight: 700;
+    }
+
+    .empty {
+      margin: 14px 0;
+      color: var(--muted);
+      text-align: center;
+      padding: 26px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    @media (max-width: 620px) {
+      main {
+        padding: 12px;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .item {
+        grid-template-columns: 82px 1fr;
+      }
+
+      .item img {
+        width: 82px;
+        height: 82px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .export-actions,
+      .download-button,
+      .export-actions button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Flohmarkt Tracker</h1>
+      <div class="summary" aria-live="polite">
+        <div class="stat">
+          <span>Verkauft</span>
+          <strong id="count">0</strong>
+        </div>
+        <div class="stat">
+          <span>Umsatz</span>
+          <strong id="total">0,00 €</strong>
+        </div>
+        <div class="stat">
+          <span>Ø Preis</span>
+          <strong id="average">0,00 €</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="form-panel" aria-labelledby="new-sale-heading">
+      <h2 id="new-sale-heading" style="margin: 0; font-size: 1.15rem;">Verkauf erfassen</h2>
+      <label>
+        Foto
+        <input id="photo" type="file" accept="image/*" capture="environment">
+      </label>
+      <label>
+        Verkaufspreis
+        <input id="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="z. B. 8,50">
+      </label>
+      <label>
+        Artikelname optional
+        <input id="name" type="text" placeholder="z. B. Playmobil, Jacke, Spielzeug">
+      </label>
+      <div class="actions">
+        <button class="primary" id="save" type="button">Speichern</button>
+        <button id="reset-form" type="button">Eingabe leeren</button>
+      </div>
+      <p class="hint">Die Einträge werden lokal in diesem Browser gespeichert. Am Ende am besten zusätzlich ein Backup exportieren.</p>
+      <div class="notice" id="notice" role="status"></div>
+    </section>
+
+    <section aria-labelledby="sales-heading">
+      <div class="toolbar">
+        <h2 id="sales-heading">Verkäufe</h2>
+        <div class="export-actions">
+          <button id="export-csv" type="button">CSV exportieren</button>
+          <button id="export-json" type="button">Backup exportieren</button>
+        </div>
+      </div>
+      <div id="empty" class="empty">Noch keine Verkäufe gespeichert.</div>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <script>
+    const DB_NAME = "flohmarkt-tracker";
+    const STORE_NAME = "sales";
+    const DB_VERSION = 1;
+
+    const elements = {
+      photo: document.getElementById("photo"),
+      price: document.getElementById("price"),
+      name: document.getElementById("name"),
+      save: document.getElementById("save"),
+      resetForm: document.getElementById("reset-form"),
+      notice: document.getElementById("notice"),
+      list: document.getElementById("list"),
+      empty: document.getElementById("empty"),
+      count: document.getElementById("count"),
+      total: document.getElementById("total"),
+      average: document.getElementById("average"),
+      exportCsv: document.getElementById("export-csv"),
+      exportJson: document.getElementById("export-json")
+    };
+
+    const euro = new Intl.NumberFormat("de-DE", {
+      style: "currency",
+      currency: "EUR"
+    });
+
+    let db;
+    let sales = [];
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME, { keyPath: "id" });
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function readAllSales() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function saveSale(sale) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readwrite");
+        transaction.objectStore(STORE_NAME).put(sale);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    function deleteSale(id) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readwrite");
+        transaction.objectStore(STORE_NAME).delete(id);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    function parsePrice(value) {
+      const normalized = String(value).replace(",", ".").trim();
+      const parsed = Number.parseFloat(normalized);
+      return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : NaN;
+    }
+
+    function showNotice(message) {
+      elements.notice.textContent = message;
+      elements.notice.classList.add("show");
+      window.setTimeout(() => {
+        elements.notice.classList.remove("show");
+      }, 2200);
+    }
+
+    function clearForm() {
+      elements.photo.value = "";
+      elements.price.value = "";
+      elements.name.value = "";
+      elements.price.focus();
+    }
+
+    function resizePhoto(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const image = new Image();
+          image.onload = () => {
+            const maxSide = 1100;
+            const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+
+            const context = canvas.getContext("2d");
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.82));
+          };
+          image.onerror = () => reject(new Error("Das Foto konnte nicht verarbeitet werden."));
+          image.src = reader.result;
+        };
+
+        reader.onerror = () => reject(new Error("Das Foto konnte nicht gelesen werden."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function render() {
+      const sortedSales = [...sales].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const total = sortedSales.reduce((sum, sale) => sum + sale.price, 0);
+      const average = sortedSales.length ? total / sortedSales.length : 0;
+
+      elements.count.textContent = String(sortedSales.length);
+      elements.total.textContent = euro.format(total);
+      elements.average.textContent = euro.format(average);
+      elements.empty.style.display = sortedSales.length ? "none" : "block";
+      elements.list.innerHTML = "";
+
+      for (const sale of sortedSales) {
+        const item = document.createElement("article");
+        item.className = "item";
+
+        const image = document.createElement("img");
+        image.src = sale.photo;
+        image.alt = sale.name ? `Foto von ${sale.name}` : "Foto des verkauften Artikels";
+
+        const info = document.createElement("div");
+        info.className = "item-info";
+
+        const top = document.createElement("div");
+        top.className = "item-top";
+
+        const name = document.createElement("div");
+        name.className = "item-name";
+        name.textContent = sale.name || "Verkaufter Artikel";
+
+        const price = document.createElement("div");
+        price.className = "price";
+        price.textContent = euro.format(sale.price);
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = new Date(sale.createdAt).toLocaleString("de-DE", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        const remove = document.createElement("button");
+        remove.className = "delete";
+        remove.type = "button";
+        remove.textContent = "Löschen";
+        remove.addEventListener("click", async () => {
+          const confirmed = window.confirm("Diesen Verkauf löschen?");
+          if (!confirmed) return;
+          await deleteSale(sale.id);
+          sales = await readAllSales();
+          render();
+        });
+
+        top.append(name, price);
+        info.append(top, meta, remove);
+        item.append(image, info);
+        elements.list.append(item);
+      }
+    }
+
+    async function handleSave() {
+      const file = elements.photo.files[0];
+      const price = parsePrice(elements.price.value);
+
+      if (!file) {
+        showNotice("Bitte zuerst ein Foto aufnehmen oder auswählen.");
+        return;
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+        showNotice("Bitte einen gültigen Verkaufspreis eingeben.");
+        return;
+      }
+
+      elements.save.disabled = true;
+      elements.save.textContent = "Speichere ...";
+
+      try {
+        const photo = await resizePhoto(file);
+        const sale = {
+          id: crypto.randomUUID(),
+          name: elements.name.value.trim(),
+          price,
+          photo,
+          createdAt: new Date().toISOString()
+        };
+
+        await saveSale(sale);
+        sales = await readAllSales();
+        render();
+        clearForm();
+        showNotice("Verkauf gespeichert.");
+      } catch (error) {
+        showNotice(error.message || "Speichern fehlgeschlagen.");
+      } finally {
+        elements.save.disabled = false;
+        elements.save.textContent = "Speichern";
+      }
+    }
+
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCsv() {
+      const rows = [
+        ["Datum", "Artikel", "Preis"].join(";"),
+        ...sales
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+          .map((sale) => [
+            new Date(sale.createdAt).toLocaleString("de-DE"),
+            `"${String(sale.name || "").replaceAll('"', '""')}"`,
+            String(sale.price).replace(".", ",")
+          ].join(";"))
+      ];
+
+      download("flohmarkt-verkaeufe.csv", rows.join("\n"), "text/csv;charset=utf-8");
+    }
+
+    function exportJson() {
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        sales: sales.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      };
+      download("flohmarkt-backup.json", JSON.stringify(backup, null, 2), "application/json");
+    }
+
+    async function init() {
+      if (!("indexedDB" in window)) {
+        showNotice("Dieser Browser unterstützt die lokale Speicherung nicht.");
+        return;
+      }
+
+      db = await openDatabase();
+      sales = await readAllSales();
+      render();
+
+      elements.save.addEventListener("click", handleSave);
+      elements.resetForm.addEventListener("click", clearForm);
+      elements.exportCsv.addEventListener("click", exportCsv);
+      elements.exportJson.addEventListener("click", exportJson);
+    }
+
+    init().catch((error) => {
+      showNotice(error.message || "Die App konnte nicht gestartet werden.");
+    });
+  </script>
+</body>
+</html>
